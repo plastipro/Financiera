@@ -230,7 +230,7 @@ const DEFAULT_PIN='1234';
 let pinInput='',selectedDeudor=null,selectedCuota=0,deudores=[];
 
 function getPin(){return localStorage.getItem('mp_pin')||DEFAULT_PIN;}
-const DEFAULT_URL='https://script.google.com/macros/s/AKfycbz1DvwZenJWhdCv4VItKllyENMhjD3j2-SQsHitgxCCxJG6RC3sVfBmlC2WgKg-o7Hu/exec';
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxybGFmD5HZRIJn2UiH1z59JXY7_NuG24DNugpLfnNXtrsI49sK-_mk_aLnJx6TWvd5/exec';
 function getUrl(){return localStorage.getItem('mp_url')||DEFAULT_URL;}
 function saveCfg(){localStorage.setItem('mp_url',document.getElementById('cfg-url').value.trim());}
 
@@ -273,12 +273,21 @@ function switchTab(tab){
   document.getElementById('tab-pago').classList.toggle('active',tab==='pago');
   if(tab==='pago')renderDeudores();
 }
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    window[cb] = (data) => { resolve(data); delete window[cb]; script.remove(); };
+    script.onerror = reject;
+    script.src = url + '&callback=' + cb;
+    document.head.appendChild(script);
+  });
+}
 async function loadDeudores(){
   const url=getUrl();if(!url)return;
   try{
-    const res=await fetch(url+'?action=getDeudores').then(r=>r.json());
+    const res=await jsonp(url+'?action=getDeudores');
     deudores=(res.deudores||[]).filter(d=>(d.estado||'').toString().toUpperCase()==='ACTIVO');
-    renderDeudores();
   }catch(e){}
 }
 function filterDeudores(){
@@ -360,7 +369,8 @@ async function submitPrestamo(){
   const btn=document.getElementById('btn-prestamo');
   btn.disabled=true;btn.innerHTML='<span class="spinner-inline"></span>Guardando...';
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'addPrestamo',nombre,capital,cuotas,tipo,pagoCuota})}).then(r=>r.json());
+    const params=encodeURIComponent(JSON.stringify({action:'addPrestamo',nombre,capital,cuotas,tipo,pagoCuota}));
+    const res=await jsonp(url+'?data='+params);
     if(res.error)throw new Error(res.error);
     toast('✓ Préstamo registrado','ok');
     ['p-nombre','p-capital','p-cuotas','p-cuota'].forEach(id=>document.getElementById(id).value='');
@@ -379,7 +389,8 @@ async function submitPago(){
   const btn=document.getElementById('btn-pago');
   btn.disabled=true;btn.innerHTML='<span class="spinner-inline"></span>Guardando...';
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'addPago',nombre:selectedDeudor,fecha,monto,notas})}).then(r=>r.json());
+    const params=encodeURIComponent(JSON.stringify({action:'addPago',nombre:selectedDeudor,fecha,monto,notas}));
+    const res=await jsonp(url+'?data='+params);
     if(res.error)throw new Error(res.error);
     toast('✓ Pago de '+fmt(monto)+' registrado','ok');
     document.getElementById('pago-monto').value='';
