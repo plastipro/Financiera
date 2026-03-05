@@ -230,7 +230,8 @@ const DEFAULT_PIN='1234';
 let pinInput='',selectedDeudor=null,selectedCuota=0,deudores=[];
 
 function getPin(){return localStorage.getItem('mp_pin')||DEFAULT_PIN;}
-function getUrl(){return(localStorage.getItem('mp_url')||'').trim();}
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycby48h05zxWsQhtHmFozeXJHW5NZVPumlPVakTbAjrOoSpgbmsjXcwuaabV0O5hLQDpJ/exec';
+function getUrl(){return localStorage.getItem('mp_url')||DEFAULT_URL;}
 function saveCfg(){localStorage.setItem('mp_url',document.getElementById('cfg-url').value.trim());}
 
 function pinPress(d){
