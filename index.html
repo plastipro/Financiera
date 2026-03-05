@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MisPréstamos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b0d11;--card:#13161d;--card2:#1a1e28;--border:#252a38;--accent:#00e5a0;--accent2:#ff6b35;--text:#eef0f6;--muted:#5a6280;--danger:#ff4757; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:420px;margin:0 auto;overflow-x:hidden;}
+  #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;}
+  .login-icon{width:72px;height:72px;background:linear-gradient(135deg,#0d3328,#0a2018);border:1px solid #1a4d38;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:28px;}
+  .login-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
+  .login-title span{color:var(--accent);}
+  .login-sub{color:var(--muted);font-size:14px;text-align:center;margin-bottom:40px;}
+  .pin-dots{display:flex;gap:14px;margin-bottom:40px;}
+  .pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);transition:all .2s;}
+  .pin-dot.filled{background:var(--accent);border-color:var(--accent);box-shadow:0 0 12px rgba(0,229,160,.4);}
+  .pin-dot.error{background:var(--danger);border-color:var(--danger);}
+  .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+  .num-btn{background:var(--card);border:1px solid var(--border);border-radius:18px;height:70px;font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--text);cursor:pointer;transition:all .1s;display:flex;align-items:center;justify-content:center;}
+  .num-btn:active{background:var(--card2);transform:scale(.94);}
+  .num-btn.del{font-size:20px;color:var(--muted);}
+  .num-btn.empty{visibility:hidden;}
+  .login-error{color:var(--danger);font-size:13px;margin-top:20px;text-align:center;opacity:0;transition:opacity .3s;}
+  .login-error.show{opacity:1;}
+  #app-screen{display:none;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:56px 24px 20px;}
+  .topbar-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+  .topbar-title span{color:var(--accent);}
+  .logout-btn{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 14px;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 24px 24px;}
+  .tab-btn{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 12px;cursor:pointer;transition:all .2s;text-align:center;}
+  .tab-btn.active{background:linear-gradient(135deg,#0d3328,#0a2018);border-color:#1a4d38;}
+  .tab-btn.active.orange{background:linear-gradient(135deg,#2e1a0d,#1f120a);border-color:#4d2a1a;}
+  .tab-icon{font-size:26px;margin-bottom:6px;}
+  .tab-label{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--muted);}
+  .tab-btn.active .tab-label{color:var(--accent);}
+  .tab-btn.active.orange .tab-label{color:var(--accent2);}
+  .form-screen{display:none;padding:0 24px 40px;}
+  .form-screen.active{display:block;}
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:24px;}
+  .form-card-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;margin-bottom:22px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+  .field input,.field select{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:15px 16px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+  .field input:focus,.field select:focus{border-color:var(--accent);}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%235a6280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:44px;}
+  .field select option{background:#1a1e28;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .preview{background:linear-gradient(135deg,#0d2e22,#091a14);border:1px solid #1a4038;border-radius:16px;padding:16px 18px;margin:18px 0;}
+  .preview-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px;}
+  .preview-row+.preview-row{border-top:1px solid #1a3828;}
+  .preview-row .pl{color:#4daa80;font-size:13px;}
+  .preview-row .pv{font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);}
+  .preview-row .pv.big{font-size:22px;}
+  .deudor-list{background:var(--card2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:18px;max-height:220px;overflow-y:auto;}
+  .deudor-item{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border);}
+  .deudor-item:last-child{border-bottom:none;}
+  .deudor-item:active{background:var(--border);}
+  .deudor-item.selected{background:#0d2e22;}
+  .di-name{font-weight:500;font-size:15px;}
+  .di-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .di-check{color:var(--accent);font-size:18px;opacity:0;}
+  .deudor-item.selected .di-check{opacity:1;}
+  .no-deudores{padding:20px;text-align:center;color:var(--muted);font-size:14px;}
+  .btn{width:100%;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .15s;letter-spacing:.3px;}
+  .btn:active{transform:scale(.97);opacity:.9;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .btn-green{background:var(--accent);color:#000;}
+  .btn-orange{background:var(--accent2);color:#fff;}
+  .config-row{text-align:center;padding:20px 24px 10px;}
+  .config-link{color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:28px 28px 0 0;padding:28px 24px 48px;width:100%;max-width:420px;position:relative;}
+  .modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;}
+  .modal-field{margin-bottom:16px;}
+  .modal-field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+  .modal-field input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;}
+  .modal-field input:focus{border-color:var(--accent);}
+  .modal-hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6;}
+  .modal-close{position:absolute;top:16px;right:20px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
+  .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;max-width:85vw;text-align:center;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.ok{border-color:var(--accent);color:var(--accent);}
+  .toast.err{border-color:var(--danger);color:var(--danger);}
+  .cargo-box{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:18px;}
+  .cargo-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px;}
+  .cargo-row+.cargo-row{border-top:1px solid var(--border);}
+  .cargo-label{color:var(--muted);font-size:13px;}
+  .cargo-val{font-family:'Syne',sans-serif;font-weight:700;}
+  .cargo-red{color:var(--danger);}
+  .cargo-green{color:var(--accent);font-size:18px;}
+  .cargo-total-row .cargo-label{color:var(--text);font-weight:600;}
+  .checklist-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
+  .chk-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+  .chk-item:last-child{border-bottom:none;}
+  .chk-item input[type=checkbox]{display:none;}
+  .chk-box{width:22px;height:22px;min-width:22px;border-radius:7px;border:2px solid var(--border);background:var(--card);transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .chk-item input:checked+.chk-box{background:var(--accent);border-color:var(--accent);color:#000;}
+  .chk-item input:checked+.chk-box::after{content:'✓';font-weight:700;}
+  .chk-label{font-size:14px;color:var(--text);line-height:1.3;}
+  .chk-item input:checked~.chk-label{color:var(--muted);text-decoration:line-through;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-icon">💰</div>
+  <div class="login-title">Mis<span>Préstamos</span></div>
+  <div class="login-sub">Ingresa tu PIN para continuar</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="numpad">
+    <button class="num-btn" onclick="pinPress('1')">1</button>
+    <button class="num-btn" onclick="pinPress('2')">2</button>
+    <button class="num-btn" onclick="pinPress('3')">3</button>
+    <button class="num-btn" onclick="pinPress('4')">4</button>
+    <button class="num-btn" onclick="pinPress('5')">5</button>
+    <button class="num-btn" onclick="pinPress('6')">6</button>
+    <button class="num-btn" onclick="pinPress('7')">7</button>
+    <button class="num-btn" onclick="pinPress('8')">8</button>
+    <button class="num-btn" onclick="pinPress('9')">9</button>
+    <button class="num-btn empty"></button>
+    <button class="num-btn" onclick="pinPress('0')">0</button>
+    <button class="num-btn del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="login-error" id="login-error">PIN incorrecto. Intenta de nuevo.</div>
+</div>
+
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-title">Mis<span>Préstamos</span></div>
+    <button class="logout-btn" onclick="logout()">Salir 🔒</button>
+  </div>
+  <div class="tabs">
+    <div class="tab-btn active" id="tab-prestamo" onclick="switchTab('prestamo')">
+      <div class="tab-icon">📋</div>
+      <div class="tab-label">Nuevo Préstamo</div>
+    </div>
+    <div class="tab-btn orange" id="tab-pago" onclick="switchTab('pago')">
+      <div class="tab-icon">💵</div>
+      <div class="tab-label">Registrar Pago</div>
+    </div>
+  </div>
+
+  <div class="form-screen active" id="form-prestamo">
+    <div class="form-card">
+      <div class="form-card-title">📋 Nuevo Préstamo</div>
+      <div class="field"><label>Nombre del Deudor</label><input type="text" id="p-nombre" placeholder="Ej: Juan Perez" autocomplete="off"></div>
+      <div class="field"><label>Capital a Prestar ($)</label><input type="text" id="p-capital" placeholder="10,000" inputmode="decimal" oninput="fmtInput(this)"></div>
+      <div class="field"><label># de Cuotas (Semanales)</label><input type="number" id="p-cuotas" placeholder="15" inputmode="numeric"></div>
+      <div class="field"><label>Pago por Cuota ($)</label><input type="text" id="p-cuota" placeholder="1,000" inputmode="decimal" oninput="fmtInput(this)"></div>
+
+      <div class="checklist">
+        <div class="checklist-title">Requisitos recibidos</div>
+        <label class="chk-item"><input type="checkbox" id="chk1" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Firma todas las hojas del contrato</span></label>
+        <label class="chk-item"><input type="checkbox" id="chk2" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Copia INE</span></label>
+        <label class="chk-item"><input type="checkbox" id="chk3" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Firma pagaré</span></label>
+        <label class="chk-item"><input type="checkbox" id="chk4" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Foto de la firma del contrato</span></label>
+        <label class="chk-item"><input type="checkbox" id="chk5" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Foto de frente mirando a la cámara</span></label>
+        <label class="chk-item"><input type="checkbox" id="chk6" onchange="checkAll()"><span class="chk-box"></span><span class="chk-label">Comprobante de domicilio</span></label>
+      </div>
+      <button class="btn btn-green" id="btn-prestamo" onclick="submitPrestamo()" disabled>Registrar Préstamo</button>
+    </div>
+  </div>
+
+  <div class="form-screen" id="form-pago">
+    <div class="form-card">
+      <div class="form-card-title">💵 Registrar Pago</div>
+      <div class="field"><label>¿Quién pagó?</label><div class="deudor-list" id="deudor-list"><div class="no-deudores">Cargando deudores...</div></div></div>
+      <div class="field"><label>Fecha del Pago</label><input type="date" id="pago-fecha"></div>
+      <div class="field"><label>Días de Atraso</label><input type="number" id="pago-dias" placeholder="0" inputmode="numeric" min="0" value="0" oninput="calcPagoTotal()"></div>
+      <div class="cargo-box" id="cargo-box" style="display:none">
+        <div class="cargo-row"><span class="cargo-label">Pago normal</span><span class="cargo-val" id="cargo-normal">—</span></div>
+        <div class="cargo-row"><span class="cargo-label">Cargo por atraso (<span id="cargo-dias-label">0</span> días × 10%)</span><span class="cargo-val cargo-red" id="cargo-extra">—</span></div>
+        <div class="cargo-row cargo-total-row"><span class="cargo-label">Total a cobrar</span><span class="cargo-val cargo-green" id="cargo-total">—</span></div>
+      </div>
+      <div class="field"><label>Monto a Cobrar ($)</label><input type="text" id="pago-monto" placeholder="Se llena automático" readonly style="opacity:0.6;cursor:not-allowed;"></div>
+      <div class="field"><label>Notas (opcional)</label><input type="text" id="pago-notas" placeholder="efectivo, transferencia..."></div>
+      <button class="btn btn-orange" id="btn-pago" onclick="submitPago()">Registrar Pago</button>
+    </div>
+  </div>
+
+  <div class="config-row"><span class="config-link" onclick="openConfig()">⚙️ Configuración</span></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeConfigOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeConfig()">✕</button>
+    <div class="modal-title">⚙️ Configuración</div>
+    <div class="modal-field">
+      <label>URL del Google Apps Script</label>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/..." oninput="saveCfg()">
+      <div class="modal-hint">Google Sheets → Extensiones → Apps Script → Implementar → Nueva implementación → Tipo: Aplicación web → Acceso: Cualquier persona → Copia la URL.</div>
+    </div>
+    <div class="modal-field" style="margin-top:20px">
+      <label>Cambiar PIN (4 dígitos)</label>
+      <input type="number" id="cfg-pin" placeholder="Nuevo PIN" inputmode="numeric">
+    </div>
+    <button class="btn btn-green" style="margin-top:8px" onclick="savePin()">Guardar PIN</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_PIN='1234';
+let pinInput='',selectedDeudor=null,selectedCuota=0,deudores=[];
+
+function getPin(){return localStorage.getItem('mp_pin')||DEFAULT_PIN;}
+function getUrl(){return(localStorage.getItem('mp_url')||'').trim();}
+function saveCfg(){localStorage.setItem('mp_url',document.getElementById('cfg-url').value.trim());}
+
+function pinPress(d){
+  if(pinInput.length>=4)return;
+  pinInput+=d;updateDots();
+  if(pinInput.length===4)setTimeout(checkPin,120);
+}
+function pinDel(){pinInput=pinInput.slice(0,-1);updateDots();}
+function updateDots(state='normal'){
+  document.querySelectorAll('.pin-dot').forEach((dot,i)=>{
+    dot.className='pin-dot';
+    if(state==='error')dot.classList.add('error');
+    else if(i<pinInput.length)dot.classList.add('filled');
+  });
+}
+function checkPin(){
+  if(pinInput===getPin()){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    document.getElementById('pago-fecha').value=new Date().toISOString().split('T')[0];
+    document.getElementById('cfg-url').value=getUrl();
+    loadDeudores();
+  } else {
+    updateDots('error');
+    document.getElementById('login-error').classList.add('show');
+    setTimeout(()=>{pinInput='';updateDots();document.getElementById('login-error').classList.remove('show');},1200);
+  }
+}
+function logout(){
+  pinInput='';updateDots();
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+function switchTab(tab){
+  document.querySelectorAll('.form-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('form-'+tab).classList.add('active');
+  document.getElementById('tab-prestamo').classList.toggle('active',tab==='prestamo');
+  document.getElementById('tab-pago').classList.toggle('active',tab==='pago');
+  if(tab==='pago')renderDeudores();
+}
+async function loadDeudores(){
+  const url=getUrl();if(!url)return;
+  try{
+    const res=await fetch(url+'?action=getDeudores').then(r=>r.json());
+    deudores=(res.deudores||[]).filter(d=>(d.estado||'').toString().toUpperCase()==='ACTIVO');
+    renderDeudores();
+  }catch(e){}
+}
+function renderDeudores(){
+  const el=document.getElementById('deudor-list');
+  if(!deudores.length){el.innerHTML='<div class="no-deudores">No hay préstamos activos aún</div>';return;}
+  el.innerHTML=deudores.map(d=>`
+    <div class="deudor-item ${selectedDeudor===d.nombre?'selected':''}" onclick="selectDeudor('${d.nombre}','${d.pagoCuota}',this)">
+      <div><div class="di-name">${d.nombre}</div><div class="di-meta">Cuota: ${fmt(d.pagoCuota)} · ${d.tipo||''}</div></div>
+      <div class="di-check">✓</div>
+    </div>`).join('');
+}
+function selectDeudor(nombre,cuota,el){
+  selectedDeudor=nombre;
+  selectedCuota=parseFloat(cuota)||0;
+  document.querySelectorAll('.deudor-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('pago-dias').value='0';
+  calcPagoTotal();
+}
+function calcPagoTotal(){
+  const dias=parseInt(document.getElementById('pago-dias').value)||0;
+  const box=document.getElementById('cargo-box');
+  if(!selectedCuota){box.style.display='none';return;}
+  const cargo=selectedCuota*0.10*dias;
+  const total=selectedCuota+cargo;
+  document.getElementById('cargo-normal').textContent=fmt(selectedCuota);
+  document.getElementById('cargo-extra').textContent=dias>0?'+'+fmt(cargo):fmt(0);
+  document.getElementById('cargo-total').textContent=fmt(total);
+  document.getElementById('cargo-dias-label').textContent=dias;
+  box.style.display=dias>0?'block':'none';
+  // Auto-fill monto
+  const montoEl=document.getElementById('pago-monto');
+  montoEl.value=total.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function calcPreview(){
+  const cap=parseFloat(document.getElementById('p-capital').value)||0;
+  const ctas=parseInt(document.getElementById('p-cuotas').value)||0;
+  const cuota=parseFloat(document.getElementById('p-cuota').value)||0;
+  const box=document.getElementById('preview');
+  if(cap&&ctas&&cuota){
+    const total=ctas*cuota,int=total-cap,rend=cap>0?(int/cap*100).toFixed(1):0;
+    document.getElementById('prev-total').textContent=fmt(total);
+    document.getElementById('prev-int').textContent=fmt(int);
+    document.getElementById('prev-rend').textContent=rend+'%';
+    box.style.display='block';
+  }else{box.style.display='none';}
+}
+async function submitPrestamo(){
+  const url=getUrl();if(!url){toast('Configura la URL del script ⚙️','err');openConfig();return;}
+  const nombre=document.getElementById('p-nombre').value.trim();
+  const capital=parseAmt('p-capital');
+  const cuotas=parseInt(document.getElementById('p-cuotas').value);
+  const tipo='Semanal';
+  const pagoCuota=parseAmt('p-cuota');
+  if(!nombre||!capital||!cuotas||!pagoCuota){toast('Llena todos los campos','err');return;}
+  const btn=document.getElementById('btn-prestamo');
+  btn.disabled=true;btn.innerHTML='<span class="spinner-inline"></span>Guardando...';
+  try{
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'addPrestamo',nombre,capital,cuotas,tipo,pagoCuota})}).then(r=>r.json());
+    if(res.error)throw new Error(res.error);
+    toast('✓ Préstamo registrado','ok');
+    ['p-nombre','p-capital','p-cuotas','p-cuota'].forEach(id=>document.getElementById(id).value='');
+    resetChecklist();
+    await loadDeudores();
+  }catch(e){toast('Error al guardar','err');}
+  finally{btn.disabled=false;btn.textContent='Registrar Préstamo';}
+}
+async function submitPago(){
+  const url=getUrl();if(!url){toast('Configura la URL del script ⚙️','err');openConfig();return;}
+  if(!selectedDeudor){toast('Selecciona quién pagó','err');return;}
+  const fecha=document.getElementById('pago-fecha').value;
+  const monto=parseAmt('pago-monto');
+  const notas=document.getElementById('pago-notas').value.trim();
+  if(!fecha||!monto){toast('Ingresa fecha y monto','err');return;}
+  const btn=document.getElementById('btn-pago');
+  btn.disabled=true;btn.innerHTML='<span class="spinner-inline"></span>Guardando...';
+  try{
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'addPago',nombre:selectedDeudor,fecha,monto,notas})}).then(r=>r.json());
+    if(res.error)throw new Error(res.error);
+    toast('✓ Pago de '+fmt(monto)+' registrado','ok');
+    document.getElementById('pago-monto').value='';
+    document.getElementById('pago-notas').value='';
+    document.getElementById('pago-dias').value='0';
+    document.getElementById('cargo-box').style.display='none';
+    selectedDeudor=null;selectedCuota=0;
+    await loadDeudores();renderDeudores();
+  }catch(e){toast('Error al guardar','err');}
+  finally{btn.disabled=false;btn.textContent='Registrar Pago';}
+}
+function openConfig(){document.getElementById('cfg-url').value=getUrl();document.getElementById('modal-overlay').classList.add('show');}
+function closeConfig(){document.getElementById('modal-overlay').classList.remove('show');}
+function closeConfigOutside(e){if(e.target===document.getElementById('modal-overlay'))closeConfig();}
+function savePin(){
+  const p=document.getElementById('cfg-pin').value.trim();
+  if(!/^\d{4}$/.test(p)){toast('El PIN debe ser de 4 dígitos','err');return;}
+  localStorage.setItem('mp_pin',p);
+  document.getElementById('cfg-pin').value='';
+  toast('✓ PIN actualizado','ok');closeConfig();
+}
+function checkAll(){
+  const all=['chk1','chk2','chk3','chk4','chk5','chk6'].every(id=>document.getElementById(id).checked);
+  document.getElementById('btn-prestamo').disabled=!all;
+}
+function resetChecklist(){
+  ['chk1','chk2','chk3','chk4','chk5','chk6'].forEach(id=>{document.getElementById(id).checked=false;});
+  document.getElementById('btn-prestamo').disabled=true;
+}
+function fmtInput(el){
+  // Strip everything except digits and one decimal point
+  let raw = el.value.replace(/[^0-9.]/g,'');
+  // Only one decimal point
+  const parts = raw.split('.');
+  if(parts.length > 2) raw = parts[0]+'.'+parts.slice(1).join('');
+  // Add thousands commas to integer part
+  const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  el.value = parts.length === 2 ? intPart+'.'+parts[1] : intPart;
+}
+function parseAmt(id){
+  return parseFloat(document.getElementById(id).value.replace(/,/g,'')||'0')||0;
+}
+function fmt(n){
+  if(!n&&n!==0)return'—';
+  return'$'+Number(n).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast '+type+' show';
+  setTimeout(()=>t.className='toast',2800);
+}
+</script>
+</body>
+</html>
