@@ -355,13 +355,12 @@ async function submitPrestamo(){
   const nombre=document.getElementById('p-nombre').value.trim();
   const capital=parseAmt('p-capital');
   const cuotas=parseInt(document.getElementById('p-cuotas').value);
-  const tipo='Semanal';
   const pagoCuota=parseAmt('p-cuota');
   if(!nombre||!capital||!cuotas||!pagoCuota){toast('Llena todos los campos','err');return;}
   const btn=document.getElementById('btn-prestamo');
   btn.disabled=true;btn.innerHTML='<span class="spinner-inline"></span>Guardando...';
   try{
-    const res=await apiPost({action:'addPrestamo',nombre,capital,cuotas,tipo,pagoCuota});
+    const res=await apiPost({action:'addPrestamo',nombre,capital,cuotas,pagoCuota});
     if(res.error)throw new Error(res.error);
     toast('✓ Préstamo registrado','ok');
     ['p-nombre','p-capital','p-cuotas','p-cuota'].forEach(id=>document.getElementById(id).value='');
